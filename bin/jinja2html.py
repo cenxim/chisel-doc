@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 def main(args):
     env = Environment(loader=FileSystemLoader(
             os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
-                         'doc', 'templates')))
+                         'templates')))
     template = env.get_template(args[1])
     with open(args[2], 'w') as outfile:
         outfile.write(template.render())

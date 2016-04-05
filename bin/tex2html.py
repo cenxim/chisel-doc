@@ -49,7 +49,7 @@ def main(args):
                 FileSystemLoader('.'),
                 FileSystemLoader(
                     os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
-                                 'doc', 'templates'))]))
+                                 'templates'))]))
     template = env.get_template(tmpfile)
     with open(args[2], 'w') as outfile:
         outfile.write(template.render(text=text).encode('utf-8'))
