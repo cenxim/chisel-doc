@@ -85,6 +85,7 @@ clean:
 	-rm -f $(STY_TEMP_FILES)
 	# Remove any .png files that are created from pdfs
 	-rm -f $(subst .pdf,.png,$(wildcard parameters/figs/*.pdf))
+	-rm -f $(subst .pdf,.png,$(wildcard tutfigs/*.pdf))
 	-rm -f $(addprefix manual/figs/,bits-1.png bits-and.png bits-or-and.png node-hierarchy.png type-hierarchy.png)
 	-rm -f $(WWW_PAGES) $(PDFS) $(WWW_EXTRA) $(addsuffix .1,$(WWW_EXTRA)) $(patsubst %.html,%.css,$(WWW_EXTRA))
 	-rm -f *~ *.aux *.log *.nav *.out *.snm *.toc *.vrb
