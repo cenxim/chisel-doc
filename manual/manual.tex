@@ -191,7 +191,7 @@ collections of other types.
 \code{Data} itself is a node:
 \begin{scala}
 abstract class Data extends Node {
-  override def clone(): this.type =
+  override def cloneType(): this.type =
     this.getClass.newInstance.
       asInstanceOf[this.type]
   // simple conversions
@@ -218,7 +218,7 @@ abstract class Data extends Node {
 \noindent
 The Data class has methods for converting between types and for
 delegating port methods to its single input.  We will discuss ports in
-Section~\ref{sec:ports}.  Finally, users can override the \code{clone}
+Section~\ref{sec:ports}.  Finally, users can override the \code{cloneType}
 method in their own type nodes (e.g., bundles) in order to reflect
 construction parameters that are necessary for cloning.
 
@@ -473,14 +473,14 @@ Vecs create an indexable vector of elements:
 object Vec {
   def apply[T <: Data](elts: Seq[T]): Vec[T]
   def apply[T <: Data](elt0: T, elts: T*): Vec[T]
-  def fill[T <: Data](n: Int)(type: => T): Vec[T]
+  def fill[T <: Data](n: Int)(gen: => T): Vec[T]
   def tabulate[T <: Data](n: Int)
-        (type: (Int) => T): Vec[T]
+        (gen: (Int) => T): Vec[T]
   def tabulate[T <: Data](n1: Int, n2: Int)
-        (type: (Int, Int) => T): Vec[Vec[T]]
+        (gen: (Int, Int) => T): Vec[Vec[T]]
 }
 
-class Vec[T <: Data](n: Int, val type: () => T) 
+class Vec[T <: Data](n: Int, val gen: () => T) 
     extends Data {
   def apply(idx: UInt): T
   def apply(idx: Int): T
@@ -685,7 +685,7 @@ positive-edge-triggered register defined as follows:
 \begin{scala}
 object Reg {
   def apply[T <: Data]
-    (type: T, next: T = null, init: T = null): T
+    (data: T, next: T = null, init: T = null): T
 }
  
 object RegNext {
@@ -721,11 +721,11 @@ positive-edge-triggered.
 
 \begin{scala}
 object Mem {
-  def apply[T <: Data](type: T, depth: Int, 
+  def apply[T <: Data](depth: Int, gen: => T, 
           seqRead: Boolean = false): Mem
 }
 
-class Mem[T <: Data](type: T, depth: Int, 
+class Mem[T <: Data](gen: () => T, depth: Int, 
       seqRead: Boolean = false)
     extends Updateable {
   def apply(idx: UInt): T
@@ -737,7 +737,7 @@ register file with one write port and two combinational read ports might be
 expressed as follows:
 
 \begin{scala}
-val rf = Mem(UInt(width = 64), 32)
+val rf = Mem(32, UInt(width = 64))
 when (wen) { rf(waddr) := wdata }
 val dout1 = rf(waddr1)
 val dout2 = rf(waddr2)
@@ -749,7 +749,7 @@ one-write SRAM might be described as follows:
 
 \begin{scala}
 val ram1r1w =
-  Mem(UInt(width = 32), 1024, seqRead = true)
+  Mem(1024, UInt(width = 32), seqRead = true)
 val dout = Reg(UInt())
 when (wen) { ram1r1w(waddr) := wdata }
 when (ren) { dout := ram1r1w(raddr) }
@@ -760,7 +760,7 @@ mutually exclusive in the same \code{when} chain:
 
 \begin{scala}
 val ram1p = 
-  Mem(UInt(width = 32), 1024, seqRead = true)
+  Mem(1024, UInt(width = 32), seqRead = true)
 val dout = Reg(UInt())
 when (wen) { ram1p(waddr) := wdata }
 .elsewhen (ren) { dout := ram1p(raddr) }
@@ -774,7 +774,7 @@ Mem also supports write masks for subword writes.  A given bit is written if
 the corresponding mask bit is set.
 
 \begin{scala}
-val ram = Mem(UInt(width = 32), 256)
+val ram = Mem(256, UInt(width = 32))
 when (wen) { ram.write(waddr, wdata, wmask) }
 \end{scala}
 
@@ -1515,15 +1515,15 @@ def MuxLookup[S <: UInt, T <: Data]
 \begin{scala}
 // create n enum values of given type
 def Enum[T <: UInt]
-  (n: Int)(type: => T): List[T]
+  (n: Int)(gen: => T): List[T]
 
 // create enum values of given type and names
 def Enum[T <: UInt]
-  (l: Symbol *)(type: => T): Map[Symbol, T]
+  (l: Symbol *)(gen: => T): Map[Symbol, T]
 
 // create enum values of given type and names
 def Enum[T <: UInt]
-  (l: List[Symbol])(type: => T): Map[Symbol, T]
+  (l: List[Symbol])(gen: => T): Map[Symbol, T]
 \end{scala}
 
 % \section{Name Mangling}
@@ -1639,21 +1639,21 @@ def PriorityEncoderOH(in: Seq[Boo]): UInt
 // standard used is that the
 // consumer uses the flipped
 // interface.
-class DecoupledIO[+T <: Data](data: T) 
+class DecoupledIO[+T <: Data](gen: T) 
     extends Bundle {
   val ready = Bool(INPUT)
   val valid = Bool(OUTPUT)
-  val bits  = data.asOutput
+  val bits  = gen.cloneType.asOutput
 }
 
 // Adds a valid protocol to any
 // interface. The standard used is
 // that the consumer uses the
 // fliped interface.
-class ValidIO[+T <: Data](type: T) 
+class ValidIO[+T <: Data](gen: T) 
     extends Bundle {
   val valid = Bool(OUTPUT)
-  val bits = data.asOutput
+  val bits  = gen.cloneType.asOutput
 }
 
 // Hardware module that is used to 
@@ -1665,7 +1665,7 @@ class ValidIO[+T <: Data](type: T)
 //    arb.io.in(0) <> producer0.io.out
 //    arb.io.in(1) <> producer1.io.out
 //    consumer.io.in <> arb.io.out
-class Arbiter[T <: Data](type: T, n: Int) 
+class Arbiter[T <: Data](gen: T, n: Int) 
   extends Module 
 
 // Hardware module that is used to 
@@ -1677,7 +1677,7 @@ class Arbiter[T <: Data](type: T, n: Int)
 //    arb.io.in(0) <> producer0.io.out
 //    arb.io.in(1) <> producer1.io.out
 //    consumer.io.in <> arb.io.out
-class RRArbiter[T <: Data](type: T, n: Int) 
+class RRArbiter[T <: Data](gen: T, n: Int) 
   extends Module 
 
 // Generic hardware queue. Required
@@ -1690,7 +1690,7 @@ class RRArbiter[T <: Data](type: T, n: Int)
 //    q.io.enq <> producer.io.out
 //    consumer.io.in <> q.io.deq
 class Queue[T <: Data]
-    (type: T, entries: Int, 
+    (gen: T, entries: Int, 
      pipe: Boolean = false,
      flow: Boolean = false)
     extends Module  
@@ -1706,7 +1706,7 @@ class Queue[T <: Data]
 //    pipe.io.enq <> produce.io.out
 //    consumer.io.in <> pipe.io.deq
 class Pipe[T <: Data]
-    (type: T, latency: Int = 1) extends Module
+    (gen: T, latency: Int = 1) extends Module
 
 \end{scala}
 
