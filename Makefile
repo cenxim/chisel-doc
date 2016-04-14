@@ -35,6 +35,16 @@ LATEX2MAN := latex2man
 
 srcDir    := .
 installTop:= www
+SUPPORT ?= $(srcDir)/bin
+VPYTHON ?= ~/.virtualenvs/cit27/bin/python
+
+# Set the current release info
+# RELEASE_TAGTEXT is something like: v2.2.18 125 g3501d7f
+#  i.e., the output of git describe with dashes replaced by spaces
+RELEASE_TAGTEXT=$(subst -, ,$(shell git describe --tags release))
+RELEASE_TAG=$(firstword $(RELEASE_TAGTEXT))
+RELEASE_DATETEXT=$(shell git log -1 --format="%ai" $(RELEASE_TAG))
+RELEASE_DATE=$(firstword $(RELEASE_DATETEXT))
 
 vpath %.tex $(addprefix $(srcDir)/,$(PDF_DIRS))
 
@@ -75,7 +85,7 @@ chisel-%.pdf: %.tex %_date.sty
 %.html: %.tex %_date.sty
 	cd $(dir $<) && for c in 0 1; do htlatex $(notdir $<) $(PWD)/$(srcDir)/html.cfg "" -d/$(PWD)/ ; done
 	mv $(subst .tex,.html,$(notdir $<)) $@~
-	$(srcDir)/bin/tex2html.py $@~ $@
+	$(SUPPORT)/tex2html.py $@~ $@
 
 %.html: $(srcDir)/templates/%.html $(srcDir)/templates/base.html
 	$(srcDir)/bin/jinja2html.py $(notdir $<) $@
@@ -85,7 +95,6 @@ clean:
 	-rm -f $(STY_TEMP_FILES)
 	# Remove any .png files that are created from pdfs
 	-rm -f $(subst .pdf,.png,$(wildcard parameters/figs/*.pdf))
-	-rm -f $(subst .pdf,.png,$(wildcard tutfigs/*.pdf))
 	-rm -f $(addprefix manual/figs/,bits-1.png bits-and.png bits-or-and.png node-hierarchy.png type-hierarchy.png)
 	-rm -f $(WWW_PAGES) $(PDFS) $(WWW_EXTRA) $(addsuffix .1,$(WWW_EXTRA)) $(patsubst %.html,%.css,$(WWW_EXTRA))
 	-rm -f *~ *.aux *.log *.nav *.out *.snm *.toc *.vrb
@@ -99,3 +108,6 @@ clean:
 %_date.sty:	%.tex
 	for f in $(wildcard $(dir $<)*.tex); do git log -n 1 --format="%at" -- $$f; done | sort -nr | head -1 | gawk '{print "\\date{",strftime("%B %e, %Y", $$1),"}"}' > $@
 	cmp $@ $(dir $<)$@ || cp $@ $(dir $<)
+
+.PHONY: FORCE
+FORCE:
