@@ -22,7 +22,7 @@
 \makeatletter
 \renewcommand{\section}{\@startsection{section}{1}{0mm}%
                                 {-0.5ex plus 4ex}%
-                                {-0.01ex plus .01ex}%x
+                                {-0.01ex plus .01ex}%
                                 {\normalfont\large\bfseries}}
 \renewcommand{\subsection}{\@startsection{subsection}{2}{0mm}%
                                 {-0.5ex plus 4ex}%
@@ -74,8 +74,6 @@ when(condition1) {
   // run if condition1 true and skip rest
 } .elsewhen(condition2) {
   // run if condition2 true and skip rest
-} .unless(condition3) {
-  // run if condition3 false and skip rest
 } .otherwise {
   // run if none of the above ran
 }
@@ -126,66 +124,6 @@ switch(x) {
 \verb$UInt$ $\rightarrow$ \verb$SInt$ & Zero-extend to SInt & \\
 \end{tabular*}
 
-\subsubsection{Bool Operators}: \newline
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill} } l l l}
-Chisel & Explanation & Width \\
-\hline
-\hline
-\verb$!x$ & Logical NOT & \verb$1$ \\
-\verb$x && y$ & Logical AND & \verb$1$ \\
-\verb$x || y$ & Logical OR & \verb$1$ \\
-\end{tabular*}
-
-\subsubsection{Bits Operators}: \newline
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill} } l l l}
-Chisel & Explanation & Width \\
-\hline
-\hline
-\verb$x(n)$ & Extract bit, \verb$0$ is LSB & \verb$1$ \\
-\verb$x(n, m)$ & Extract bitfield & \verb$n - m + 1$ \\
-\verb$x << y$ & Dynamic left shift & \verb$w(x) + maxVal(y)$ \\
-\verb$x >> y$ & Dynamic right shift & \verb$w(x) - minVal(y)$ \\
-\verb$x << n$ & Static left shift & \verb$w(x) + n$ \\
-\verb$x >> n$ & Static right shift & \verb$w(x) - n$ \\
-\verb$Fill(n, x)$ & Replicate \verb$x$, \verb$n$ times & \verb$n * w(x)$ \\
-\verb$Cat(x, y)$ & Concatenate bits & \verb$w(x) + w(y)$ \\
-\verb$Mux(c, x, y)$ & If \verb$c$, then \verb$x$; else \verb$y$ & \verb$max(w(x), w(y))$ \\
-\hline
-\verb$~x$ & Bitwise NOT & \verb$w(x)$ \\
-\verb$x & y$ & Bitwise AND & \verb$max(w(x), w(y))$ \\
-\verb$x | y$ & Bitwise OR & \verb$max(w(x), w(y))$ \\
-\verb$x ^ y$ & Bitwise XOR & \verb$max(w(x), w(y))$ \\
-\hline
-\verb$x === y$ & Equality{\small\textcolor{red}{(triple equals)}} & \verb$1$ \\
-\verb$x != y$ & Inequality & \verb$1$ \\
-\hline
-\verb$andR(x)$ & AND-reduce & \verb$1$ \\
-\verb$orR(x)$ & OR-reduce & \verb$1$ \\
-\verb$xorR(x)$ & XOR-reduce & \verb$1$ \\
-\end{tabular*}
-
-\subsubsection{UInt, SInt Operators}: (bitwdths given for \verb$UInt$s) \newline
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill} } l l l}
-Chisel & Explanation & Width \\
-\hline
-\hline
-\verb$x + y$ & Addition & \verb$max(w(x), w(y))$ \\
-\verb$x - y$ & Subtraction & \verb$max(w(x), w(y))$ \\
-\verb$x * y$ & Multiplication & \verb$w(x) + w(y)$ \\
-\verb$x / y$ & Division & \verb$w(x)$ \\
-\verb$x % y$ & Modulus & \verb$bits(maxVal(y) - 1)$ \\
-\hline
-\verb$x > y$ & Greater than & \verb$1$ \\
-\verb$x >= y$ & Greater than or equal & \verb$1$ \\
-\verb$x < y$ & Less than & \verb$1$ \\
-\verb$x <= y$ & Less than or equal & \verb$1$ \\
-\hline
-\verb$x >> y$ & Arithmetic right shift & \verb$w(x) - minVal(y)$ \\
-\verb$x >> n$ & Arithmetic right shift & \verb$w(x) - n$ \\
-\end{tabular*}
-
-\columnbreak
-
 \section{State Elements } \hrulefill\
 \subsection{Registers } retain state until updated \newline
 \verb$val my_reg = Reg([outType:Data], [next:Data],$ \newline
@@ -197,15 +135,6 @@ Chisel & Explanation & Width \\
 \end{tabular}
 \subsubsection{Updating}: assign to latch new value on next clock: \newline
 \verb$my_reg := next_val$
-\subsection{Counters } count up to a specified constant
-\begin{scala}
-  val counter = Counter(42)
-  io.out := someVec(counter.value)
-  when(counter.inc()) {
-    // counter has reached max, do something
-  }
-}
-\end{scala}
 
 \subsection{Read-Write Memory } provide addressable memories \newline
 \verb$val my_mem = Mem(n:Int, out:Data)$ \newline
@@ -241,27 +170,62 @@ val sum := my_module.io.out
 
 \columnbreak
 
+\subsubsection{Operators}: \newline
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill} } l l l}
+Chisel & Explanation & Width \\
+\hline
+\hline
+\verb$!x$ & Logical NOT & \verb$1$ \\
+\verb$x && y$ & Logical AND & \verb$1$ \\
+\verb$x || y$ & Logical OR & \verb$1$ \\
+\hline
+\verb$x(n)$ & Extract bit, \verb$0$ is LSB & \verb$1$ \\
+\verb$x(n, m)$ & Extract bitfield & \verb$n - m + 1$ \\
+\verb$x << y$ & Dynamic left shift & \verb$w(x) + maxVal(y)$ \\
+\verb$x >> y$ & Dynamic right shift & \verb$w(x) - minVal(y)$ \\
+\verb$x << n$ & Static left shift & \verb$w(x) + n$ \\
+\verb$x >> n$ & Static right shift & \verb$w(x) - n$ \\
+\verb$Fill(n, x)$ & Replicate \verb$x$, \verb$n$ times & \verb$n * w(x)$ \\
+\verb$Cat(x, y)$ & Concatenate bits & \verb$w(x) + w(y)$ \\
+\verb$Mux(c, x, y)$ & If \verb$c$, then \verb$x$; else \verb$y$ & \verb$max(w(x), w(y))$ \\
+\hline
+\verb$~x$ & Bitwise NOT & \verb$w(x)$ \\
+\verb$x & y$ & Bitwise AND & \verb$max(w(x), w(y))$ \\
+\verb$x | y$ & Bitwise OR & \verb$max(w(x), w(y))$ \\
+\verb$x ^ y$ & Bitwise XOR & \verb$max(w(x), w(y))$ \\
+\hline
+\verb$x === y$ & Equality{\small\textcolor{red}{(triple equals)}} & \verb$1$ \\
+\verb$x != y$ & Inequality & \verb$1$ \\
+\verb$x =/= y$ & Inequality & \verb$1$ \\
+\hline
+\verb$andR(x)$ & AND-reduce & \verb$1$ \\
+\verb$orR(x)$ & OR-reduce & \verb$1$ \\
+\verb$xorR(x)$ & XOR-reduce & \verb$1$ \\
+\hline
+\verb$x + y$ & Addition & \verb$max(w(x),w(y))$ \\
+\verb$x +% y$ & Addition & \verb$max(w(x),w(y))$ \\
+\verb$x +& y$ & Addition & \verb$max(w(x),w(y))+1$ \\
+\verb$x - y$ & Subtraction & \verb$max(w(x),w(y))$ \\
+\verb$x -% y$ & Subtraction & \verb$max(w(x),w(y))$ \\
+\verb$x -& y$ & Subtraction & \verb$max(w(x),w(y))+1$ \\
+\verb$x * y$ & Multiplication & \verb$w(x)+w(y)$ \\
+\verb$x / y$ & Division & \verb$w(x)$ \\
+\verb$x % y$ & Modulus & \verb$bits(maxVal(y)-1)$ \\
+\hline
+\verb$x > y$ & Greater than & \verb$1$ \\
+\verb$x >= y$ & Greater than or equal & \verb$1$ \\
+\verb$x < y$ & Less than & \verb$1$ \\
+\verb$x <= y$ & Less than or equal & \verb$1$ \\
+\hline
+\verb$x >> y$ & Arithmetic right shift & \verb$w(x) - minVal(y)$ \\
+\verb$x >> n$ & Arithmetic right shift & \verb$w(x) - n$ \\
+\end{tabular*}
+
+\columnbreak
+
 \section{Hardware Generation } \hrulefill
-\subsection{Instances}Anytime something with a chisel type is
-instantiated, some block of hardware will be created.  In order
-for that hardware block to become part of the overall generated
-circuit it must be connected directly or indirectly to a Module.
 \subsection{Functions } provide block abstractions for code.  Scala
 functions that instantiate or return Chisel types are code generators.
-Each time such a function is called more circuitry will be generated.
-\subsubsection{Defining}: write Scala functions with Chisel code:
-\begin{scala}
-def Adder(op_a:UInt, op_b:UInt): UInt = {
-  op_a + op_b
-}
-\end{scala}
-\subsubsection{Usage}: hardware is instantiated when called:
-\begin{scala}
-sum1 := Adder(UInt(1), some_data)
-sum2 := Adder(UInt(3), some_other_data)
-\end{scala}
-This creates two adder circuits, one for each time Adder is called.
-
 \subsection{Also}: Scala's \verb$if$ and \verb$for$ can be used to control hardware generation
 and are equivalent to Verilog \verb$generate if$/\verb$for$
 \begin{scala}
@@ -270,16 +234,6 @@ val number = Reg(if(can_be_negative) SInt()
 \end{scala}
 will create a Register of type SInt or UInt depending on the value of a
 Scala variable
-\begin{scala}
-  val size = 100
-  val u = Reg(Vec(size, UInt(width = 32)))
-  val v = Reg(Vec(size, UInt(width = 32)))
-  for(i <- 0 to size) {
-    v(i) := v(i) * u(i)
-  }
-\end{scala}
-The for statment above will generate 100 multiplication circuits updating the registers specified
-%\columnbreak
 
 \section{Aggregate Types } \hrulefill
 \subsection{Bundle } contains \verb$Data$ types indexed by name
@@ -347,7 +301,9 @@ val my_bundle = new Bundle {
 \verb$OHToUInt(in:Bits/Seq[Bool]): UInt$ \newline
 \phantom{x} Returns the \verb$UInt$ representation of one-hot \verb$in$
 
-\columnbreak
+\verb$Counter(n:Int]): UInt$ \newline
+\phantom{x} .inc() bumps counter returning true when n reached \newline
+\phantom{x} .value returns current value
 
 \verb$PriorityEncoder(in:Bits/Iterable[Bool]): UInt$ \newline
 \phantom{x} Returns the position the least significant \verb$1$ in \verb$in$
@@ -421,8 +377,6 @@ val my_bundle = new Bundle {
 & \verb$.io.deq$ & \verb$DecoupledIO$ sink \\
 & \verb$.io.count$ & \verb$UInt$ count of elements in the queue \\
 \end{tabular}
-
-\columnbreak
 
 \subsection{Pipe } is a \verb$Module$ delaying input data
 \subsubsection{Constructor}: \newline
